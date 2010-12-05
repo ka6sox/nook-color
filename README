@@ -1,5 +1,7 @@
+
 ####### ON DEVICE
 
+sudo remount -o suid /data
 mount -o remount,rw rootfs /
 mkdir /data/opt
 mkdir /data/opt/var
@@ -21,7 +23,8 @@ feed="http://ipkg.nslu2-linux.org/feeds/optware/cs08q1armel/cross/unstable"
 
 # == libs from pre ==
 for LIB in ld-linux.so.3 libm.so.6 libc.so.6 librt.so.1 libutil.so.1 libcrypt.so.1 libdl.so.2 libpthread.so.0 libresolv.so.2 libnss_files.so.2 libnsl.so.1 libnss_dns.so.2 libnss_compat.so.2; do 
-  cp $doctor/rootfs/lib/$LIB  .
+#  cp $doctor/rootfs/lib/$LIB  .
+  cp ~/nook-color/$LIB .
   adb push $LIB /data/opt/lib/$LIB
 done
 # alternatives
@@ -73,6 +76,7 @@ ipkg-opt install less
 ipkg-opt install zlib
 ipkg-opt install sudo
 ipkg-opt install dropbear
+ipkg-opt install screen
 # environment
 mkdir -p /data/opt/var/log; mkdir /data/opt/var/run
 mkdir -p /data/opt/home/root; ln -s /data/opt/home /home
@@ -87,3 +91,4 @@ ln -s /proc/mounts /etc/mtab
 
 #  you can get a better env now by running bash and  cd; source .profile
 ##### Get ip of device from ifconfig and you can ssh in as root.
+
