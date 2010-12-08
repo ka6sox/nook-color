@@ -1,0 +1,3 @@
+tar cvzf stage2.tar.gz stage2
+rm stage1.zip; zip stage1.zip stage2.tar.gz busybox
+cat optware-bootstrap.sh stage1.zip > optware-bootstrap.shar
