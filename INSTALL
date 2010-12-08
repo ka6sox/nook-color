@@ -1,0 +1,1 @@
+export PATH=/opt/bin:/opt/sbin:$PATH; for FS in / /data /system; do mount -o remount,rw,suid $FS; done; ln -s /data/opt /opt; ln -s /data/opt/var /var; ln -s /data/opt/home /home; ln -s /system/bin /bin; ln -s /system/lib /lib
