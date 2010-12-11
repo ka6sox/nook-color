@@ -36,11 +36,12 @@
 LOG=/data/tmp/optware-bootstrap.log
 MYUSER=""
 PATH="/system/xbin:/opt/sbin:/opt/bin:/opt/local/bin:/sbin:/system/sbin:/system/bin"
+LD_LIBRARY_PATH="/opt/lib:/system/lib"
+
+# ARCH=$(uname -m)
 
 FEED_URL="http://ipkg.nslu2-linux.org/feeds/optware"
-# ARCH=$(uname -m)
 ARCH=armv7l
-
 FEED_ARCH=cs08q1armel
 
 ### VARABLES: LOCAL
@@ -188,7 +189,8 @@ getipkg() {
 	echo "OK"
 }
 
-
+# temporarily not used
+#
 # Name:        doprofile
 # Arguments:   none
 # Description: Sets up /etc/profile.d/
@@ -268,7 +270,7 @@ mkuser() {
 					UUID=$(awk 'BEGIN {FS=":"} {if ($1 == "'"$MYUSER"'") print $3}' /etc/passwd)
 					log "${MYUSER} is an existing username (UID: ${UUID})"
 					echo "WARNING: ${MYUSER} is an existing username (UID: ${UUID})"
-					if [ "$UUID" -lt 1001 ] ; then
+					if [ "$UUID" -lt 1000 ] ; then
 						MYUSER=""
 					else
 						yesno "Would you like to create another account?"
@@ -359,7 +361,39 @@ dodropbear() {
 # Arguments:   none
 # Description: patches nook color ramdisk to enable rc.local
 patchramdisk() {
-  echo nothing yet
+	RDFILE=uRamdisk
+	cd $TMP
+
+	mkdir rd mnt
+	mknod mmcblk0 b 179 0; mknod mmcblk0p1 b 179 1
+	mount mmcblk0p1 mnt
+	
+	if [ -e $TMP/mnt/$RDFILE ]
+	then
+		echo "ramdisk $TMP/mnt/${RDFILE} found" >> $LOG
+
+		cd $TMP/rd
+		dd if=$TMP/mnt/$RDFILE bs=64 skip=1| gunzip -c |cpio -i
+		if grep '/opt/etc/init.rc' init.rc
+		then
+			echo "Ramdisk was already patched, skipping.  (patchramdisk called on patched disk, should not be here)"
+		else
+					echo -n "Patching Ramdisk: "
+			mount -o remount,rw /mnt
+			cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.bak
+			cp init.rc $TMP/init.rc.bak
+			awk '{gsub("class_start default","import /data/opt/etc/init.rc\n\n    class_start default"); print}' $TMP/init.rc.bak > init.rc
+			find . -regex "./.*"| cpio -o -H newc | gzip > $TMP/ramdisk.gz
+			cd $TMP
+			mkimage -T ramdisk -C gzip -A arm \
+				-d $TMP/ramdisk.gz $TMP/mnt/$RDFILE
+			echo "OK"
+		fi
+		umount $TMP/mnt
+	else
+		echo "Could not get at the ramdisk"
+
+	fi
 }
 
 
@@ -370,10 +404,14 @@ umask 022
 mkdir /data/tmp
 log "Extracting stage2: "
 echo "Extracting stage2: "
-mkdir $TMP
+
+# Only make directory if does not exist
+/system/bin/ls $TMP > /dev/null 2>&1 || mkdir $TMP
 miniunz -oe $0 -d $TMP
 cd $TMP
 chmod 755 busybox
+# support unix style mount commands
+./busybox [ ! -e /system/etc/mtab ] && ./busybox ln -s /proc/mounts /system/etc/mtab
 
 # Mount the root fs rw
 log "Mounting the root file system read-write: "
@@ -387,20 +425,23 @@ log "Remounting:"
 for FS in / /system /data; do
     echo -n " $FS"
 	log "Remounting $FS"
-	./busybox mount -o remount,rw,suid $FS
+	./busybox mount -o remount,rw,suid,dev $FS
 done; echo
 
-# support unix style mount commands
-./busybox ln -s /proc/mounts /system/etc/mtab
+if ./busybox [ -x /system/xbin/busybox ] && ./busybox [ -x /system/xbin/yes ] ; then
+	echo "Static busybox already installed."
+	log "Static busybox already installed."
+else
+	echo "Installing static busybox"
+	log "Installing static busybox"
+	mkdir /system/xbin
+	./busybox cp -p busybox /system/xbin
 
-echo "Installing static BusyBox"
-log "Installing static BusyBox"
-mkdir /system/xbin
-./busybox cp -p busybox /system/xbin
+	busybox --install -s /system/xbin 
+	# rehash, busybox commands should exist preferentially in our path now
+	hash -r
+fi
 
-busybox --install -s /system/xbin 
-# rehash, busybox commands should exist preferentially in our path now
-hash -r
 echo "Extracting supplemental files"
 log "Extracting supplemental files"
 tar xzf stage2.tar.gz
@@ -411,29 +452,36 @@ if [ ! -d /data/opt ]; then
 fi
 
 
-# HACK: temp symlinks, these go in rc.local
-ln -s /data/opt /opt
-ln -s /data/opt/var /var
-ln -s /data/opt/home /home
-ln -s /system/bin /bin
-ln -s /system/lib /lib
-
+# HACK: temp symlinks, these should go in rc.local
+for LNDIR in /data/opt /data/opt/var /data/opt/home /system/bin /system/lib; do
+	TARGET=`echo $LNDIR|sed 's/.*\//\//'`
+	if [ ! -e $TARGET ]; then
+		echo "Linking $TARGET -> $LNDIR"
+		ln -s $LNDIR $TARGET
+	else
+		echo "Note: $TARGET already present"
+	fi
+done;  hash -r	
 
 # HACK: google DNS
-echo 'nameserver 8.8.8.8' > /data/opt/etc/resolv.conf
+[ ! -e /data/opt/etc/resolv.conf ] && echo 'nameserver 8.8.8.8' > /data/opt/etc/resolv.conf
 
 # some attempt at actual users
-echo 'root:x:0:0:root:/opt/home/root:/bin/bash' > /data/opt/etc/passwd
-echo 'root:x:0:'  > /opt/etc/group
-echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
+[ ! -e /data/opt/etc/passwd ] && echo 'root:x:0:0:root:/opt/home/root:/bin/bash' > /data/opt/etc/passwd
+[ ! -e /data/opt/etc/group ]  && echo 'root:x:0:'  > /data/opt/etc/group
+[ ! -e /data/opt/etc/shells ] && echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
 
 # Perm symlinks
-ln -s /opt/etc/nsswitch.conf /system/etc/nsswitch.conf
-ln -s /opt/etc/resolv.conf /system/etc/resolv.conf
-ln -s /opt/lib/ld-linux.so.3 /lib/ld-linux.so.3
-ln -s /opt/etc/passwd /system/etc/passwd
-ln -s /opt/etc/group /system/etc/group
-ln -s /opt/etc/shells /system/etc/shells
+for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
+	if [ ! -e /etc/$FILE ]; then 
+		echo "Linking /opt/etc/$FILE -> /etc/$FILE"
+		ln -s /opt/etc/$FILE /etc/$FILE
+	else
+		echo "Note: /etc/$FILE already present"
+	fi
+done
+
+[ ! -e /lib/ld-linux.so.3 ] && ln -s /opt/lib/ld-linux.so.3 /lib/ld-linux.so.3
 
 
 # Download the Package file and check version
@@ -518,12 +566,12 @@ RESULT_A="$?"
 grep PATH= /etc/profile.d/optware | grep -q "/opt/sbin"
 RESULT_B="$?"
 
-if [ "$RESULT_A" -ne 0 ] || [ "$RESULT_B" -ne 0 ] ; then
-	doprofile || exit 1
-else
-	log "/etc/profile.d/optware is already up to date"
-	echo "/etc/profile.d/optware is already up to date"
-fi
+#if [ "$RESULT_A" -ne 0 ] || [ "$RESULT_B" -ne 0 ] ; then
+#	doprofile || exit 1
+#else
+#	log "/etc/profile.d/optware is already up to date"
+#	echo "/etc/profile.d/optware is already up to date"
+#fi
 
 
 # Update the Optware package database (we can do this no matter what)
@@ -565,14 +613,24 @@ else
 	echo "Bash is already installed and no upgrades are available"
 fi
 
-# Check that vim is installed, and if not, or if there is an upgrade available, install it
-get_version bash
+# Check that sed is installed, and if not, or if there is an upgrade available, install it
+get_version sed
 if [ "$?" -eq 1 ] ; then
-	installpkg vim || exit 1
+	installpkg sed || exit 1
 else
-	log "vim is already installed and no upgrades are available"
-	echo "vim is already installed and no upgrades are available"
+	log "sed is already installed and no upgrades are available"
+	echo "sed is already installed and no upgrades are available"
 fi
+
+# Check that cpio is installed, and if not, or if there is an upgrade available, install it
+get_version cpio
+if [ "$?" -eq 1 ] ; then
+	installpkg cpio || exit 1
+else
+	log "cpio is already installed and no upgrades are available"
+	echo "cpio is already installed and no upgrades are available"
+fi
+
 
 # Check that dropbear is installed, and if not, or if there is an upgrade available, install it
 get_version dropbear
@@ -611,8 +669,10 @@ fi
 # initctl start optware-dropbear >> "$LOG" 2>&1 || error "Failed to start the Dropbear SSH daemon:" || exit 1
 # log "OK"
 # echo "OK"
-
+echo
+echo "Beginning rebuild of ramdisk to persist all this."
+patchramdisk
 echo
 log "Setup complete"
-echo "Setup complete (except for lack of symlinks on reboot, YET)"
+echo "Setup complete"
 exit 0
