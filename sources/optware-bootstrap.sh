@@ -100,9 +100,9 @@ error() {
 mkopt() {
 	log "Creating new /opt directory: "
 	echo -n "Creating new /opt directory: "
-	mkdir -p /var/opt || error "Failed to create /var/opt" || return 1
+	mkdir -p /data/opt || error "Failed to create /data/opt" || return 1
 	mkdir -p /opt || error "Failed to create /opt" || return 1
-	mount -o bind /var/opt /opt || error "Failed to mount /opt" || return 1
+	mount -o bind /data/opt /opt || error "Failed to mount /opt" || return 1
 	log "OK"
 	echo "OK"
 }
