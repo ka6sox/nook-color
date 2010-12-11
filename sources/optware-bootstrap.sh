@@ -374,25 +374,34 @@ patchramdisk() {
 
 		cd $TMP/rd
 		dd if=$TMP/mnt/$RDFILE bs=64 skip=1| gunzip -c |cpio -i
-		if grep '/opt/etc/init.rc' init.rc
+		if grep 'service optware-init' init.rc
 		then
-			echo "Ramdisk was already patched, skipping.  (patchramdisk called on patched disk, should not be here)"
+			echo "Ramdisk was already patched, skipping."
+			log "Ramdisk was already patched, skipping."
 		else
-					echo -n "Patching Ramdisk: "
+			echo -n "Patching Ramdisk: "
+			log "Patching Ramdisk: "
 			mount -o remount,rw /mnt
 			cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.bak
 			cp init.rc $TMP/init.rc.bak
-			awk '{gsub("class_start default","import /data/opt/etc/init.rc\n\n    class_start default"); print}' $TMP/init.rc.bak > init.rc
+			cat >> init.rc << EOF
+
+service optware-init /system/bin/sh /data/opt/sbin/optware-init.sh
+	user root
+	group system
+	oneshot
+EOF
 			find . -regex "./.*"| cpio -o -H newc | gzip > $TMP/ramdisk.gz
 			cd $TMP
 			mkimage -T ramdisk -C gzip -A arm \
 				-d $TMP/ramdisk.gz $TMP/mnt/$RDFILE
 			echo "OK"
+			log "OK"
 		fi
 		umount $TMP/mnt
 	else
 		echo "Could not get at the ramdisk"
-
+		log "Could not get at the ramdisk"
 	fi
 }
 
@@ -589,6 +598,7 @@ else
 	log "sudo is already installed and no upgrades are available"
 	echo "sudo is already installed and no upgrades are available"
 fi
+
 
 # Check that root privileges are enabled for our user, and if not, make it so
 if [ ! -f /opt/etc/sudoers ] ; then
