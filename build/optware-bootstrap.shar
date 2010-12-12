@@ -175,29 +175,6 @@ getipkg() {
 	echo "OK"
 }
 
-# temporarily not used
-#
-# Name:        doprofile
-# Arguments:   none
-# Description: Sets up /etc/profile.d/
-doprofile() {
-	log "Adding /opt/bin to the default \$PATH: "
-	echo -n "Adding /opt/bin to the default \$PATH: "
-	mkdir -p /etc/profile.d || error "Failed to create /etc/profile.d" || return 1
-	cat <<EOF > /etc/profile.d/optware
-umask 022
-export TERM=linux
-export PATH='/opt/bin:/opt/sbin:/opt/local/bin:/system/xbin:/system/sbin:/system/bin'
-export PS1='\u@\h:\w\\$ '
-EOF
-	if [ "$?" -ne 0 ] ; then
-		error "Failed to create /etc/profile.d/optware" || return 1
-	fi
-	log "OK"
-	echo "OK"
-}
-
-
 # Name:        updateipkg
 # Arguments:   none
 # Description: Update the Optware package database
@@ -275,7 +252,6 @@ mkuser() {
 			fi
 			if [ -n "$MYUSER" ] ; then
 				adduser -h /opt/home/$MYUSER -s /opt/bin/bash $MYUSER || MYUSER=""
-				echo 'source /etc/profile.d/optware' > /opt/home/$MYUSER/.bash_profile
 			fi
 		fi
 	done
@@ -466,6 +442,13 @@ done;  hash -r
 [ ! -e /data/opt/etc/group ]  && echo 'root:x:0:'  > /data/opt/etc/group
 [ ! -e /data/opt/etc/shells ] && echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
 
+# make a reasonable /etc/profile
+cat > /opt/etc/profile << EOF
+export PS1='[\u@\h \W]\\$ '
+export PATH='/system/xbin:/opt/sbin:/opt/bin:/sbin:/sbin:/system/sbin:/system/bin'
+export LD_LIBRARY_PATH='/opt/lib:/system/lib'
+EOF
+
 # Perm symlinks
 for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
 	if [ ! -e /etc/$FILE ]; then 
@@ -476,6 +459,7 @@ for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
 	fi
 done
 
+# all dynamic executables really expect to see ld-linux.so.3 in /lib
 [ ! -e /lib/ld-linux.so.3 ] && ln -s /opt/lib/ld-linux.so.3 /lib/ld-linux.so.3
 
 
@@ -550,16 +534,6 @@ else
 	echo "/opt/etc/ipkg/optware.conf is already up to date"
 fi
 
-
-# Check that /opt/bin and /opt/sbin are part of the default $PATH, and if not, make it so
-if [ ! -f /etc/profile.d/optware ] ; then
-	mkdir -p /etc/profile.d || error "Failed to create /etc/profile.d" || exit 1
-fi
-touch /etc/profile.d/optware || error "Failed to modify /etc/profile.d/optware" || exit 1
-grep PATH= /etc/profile.d/optware | grep -q "/opt/bin"
-RESULT_A="$?"
-grep PATH= /etc/profile.d/optware | grep -q "/opt/sbin"
-RESULT_B="$?"
 
 #if [ "$RESULT_A" -ne 0 ] || [ "$RESULT_B" -ne 0 ] ; then
 #	doprofile || exit 1
@@ -680,7 +654,7 @@ echo
 log "Setup complete"
 echo "Setup complete"
 exit 0
-PK    ‚ª‹=sÌë3 Î2   stage2.tar.gzUT	 sMMzEMux õ     ”·uP[İ.Ü"ÅŠwJ)VÜJñâ¥-îîîÜµ¸»´¸Kpw÷àÁ$Û÷7ßÌwÿ½“gö™gíe'kí9kÓÄ ¿rUFQ~…|¦ëïôıG ÷¢ÿ¹uÉƒõ%-ÊÛ|üa%óÅŸ;xéïœÌ°şüJD™ÈªıJÑ1ù]7“®x¾ê‚sm‚ıÓ‡ö³·<¶ÚÂš²ÌîT_ÙHØæ?*/ŒqFš7n®Uä-‰^V¬O\@“m‡ë®Sb‡ë0áfO~BıJıáü 0ü~ê”F›ú÷*—»9L,Å·Å%ıLì’¾ÆÛ¢ÅòsŠìLšpİwµöKîÕ…îº¾}«´Û¯ZlŒv^„çŸZ[8rpÌ:_n&9¤W˜X³D ›ùKxÿS­]§0çõ³D+ŞÊ?Ù8å)ØÏÓ”‡¨M~¨(úåııÂ²ú[2<í¶›mŞ÷Eø=¼L÷=Å¨UbŠcKÄ µ¹è$`_?ÅšúM1‡êXéKKŸ€OSH]ajf|oîû—™~6ƒò_Bï¿ñC}ãŞíÜ}Rş~½RpÒ¯Q:¤´²nq¯¹øÃÊÓõ:˜)šı®øVD ø×!u‰I?mÑŸ¯ºLº¾¶—ıZğÔ6€0°`!VËS—ø¦lì´7„Ê‹İ'õ¨Í6I6]DÆ¾m«ÁB#Rx)˜{MUä²˜­b-–E[x-hõ£Rbe²¤n¤1yÆÍ‘Èç¨¾wÛ$•]ëE•3;$J@8Ÿo)v+w¤¸ÉN­:­ñg÷³~éËßê´jøpEŸ&'Òê¹Å•İ<J·C~0xW¡\)½°Îò«ƒƒRïúä}¥ı	.ó	î:ÔÁ'»(ö8¾ $g$ôoOåé'…·0@RÂ´'şß½ºk¦^ù}SÃy2•WW>‡WÔÒRªƒ¾ÓP¼}Ÿ%øÄU€"ç?$Oƒ™Opéì	ï(o‰îßÛ“ÜÍÉwHwQ^Â¤ÅÂæéOJ”#Ÿæq£†äå¤Ÿqå‡dü1¶¦¢Ÿˆ?"B<ôËï`i¿“wë
+PK    |Œ=ÈGƒ3 Î2   stage2.tar.gzUT	 ëMsMMux õ     ”·uP[İ.Ü"ÅŠwJ)VÜJñâ¥-îîîÜµ¸»´¸Kpw÷àÁ$Û÷7ßÌwÿ½“gö™gíe'kí9kÓÄ ¿:	BQ~…|¦ëïôıG ÷¢ÿ¹uÉƒõ%-ÊÛ|üa%óÅŸ;xéïœÌ°şüJD™ÈªıJÑ1ù]7“®x¾ê‚sm‚ıÓ‡ö³·<¶ÚÂš²ÌîT_ÙHØæ?*/ŒqFš7n®Uä-‰^V¬O\@“m‡ë®Sb‡ë0áfO~BıJıáü 0ü~ê”F›ú÷*—»9L,Å·Å%ıLì’¾ÆÛ¢ÅòsŠìLšpİwµöKîÕ…îº¾}«´Û¯ZlŒv^„çŸZ[8rpÌ:_n&9¤W˜X³D ›ùKxÿS­]§0çõ³D+ŞÊ?Ù8å)ØÏÓ”‡¨M~¨(úåııÂ²ú[2<í¶›mŞ÷Eø=¼L÷=Å¨UbŠcKÄ µ¹è$`_?ÅšúM1‡êXéKKŸ€OSH]ajf|oîû—™~6ƒò_Bï¿ñC}ãŞíÜ}Rş~½RpÒ¯Q:¤´²nq¯¹øÃÊÓõ:˜)šı®øVD ø×!u‰I?mÑŸ¯ºLº¾¶—ıZğÔ6€0°`!VËS—ø¦lì´7„Ê‹İ'õ¨Í6I6]DÆ¾m«ÁB#Rx)˜{MUä²˜­b-–E[x-hõ£Rbe²¤n¤1yÆÍ‘Èç¨¾wÛ$•]ëE•3;$J@8Ÿo)v+w¤¸ÉN­:­ñg÷³~éËßê´jøpEŸ&'Òê¹Å•İ<J·C~0xW¡\)½°Îò«ƒƒRïúä}¥ı	.ó	î:ÔÁ'»(ö8¾ $g$ôoOåé'…·0@RÂ´'şß½ºk¦^ù}SÃy2•WW>‡WÔÒRªƒ¾ÓP¼}Ÿ%øÄU€"ç?$Oƒ™Opéì	ï(o‰îßÛ“ÜÍÉwHwQ^Â¤ÅÂæéOJ”#Ÿæq£†äå¤Ÿqå‡dü1¶¦¢Ÿˆ?"B<ôËï`i¿“wë
 ¨ñŸuÕ—daò¨EÉˆŠ—ß~âÀ]Ô¶%ŸÔTÖa­6èOÈí¦rİİ¨Ì<1›ONVÃWSã*uy[æ5—š›´6SXÛšK³ôt;Ûu*_Æ|ÿ¬¯,¿s´2œş¾633½¯-ß·43}Ó>9øwqfqsß°´ÚÆŞÖ*×Îñ·­ƒ†÷šNµ½{§”î’ˆ—@êéÅû%Í––¡æƒğƒöÕæƒƒU~ûşö-¦öŠTÛ|Æ¤n¼ı=’R¾¾Š¶î¶úöõvå3§;qØ«ŸÈ9wª=5[³ışş©ùİ\,ÉWëPÔYÓRÜ³÷»¸¦ÅœHç„ëÏb=±«ıb–f+Ú96[ó1Wsô¡›¥eÀôôD5´ÂO(vzçE”µÿ`uØ^Ù×”2§Y€· ‘€Š7êÇŸ:§à“6×¯Ma©uíV8BŸµœ§ÆˆÅNğ)–Ñ&"Ñ2{zİºqÿsÒ†Õ„zäÒMò‹rÃŠzgVupÏ³¯ãØ,CüÏ'êà¹«â ¡’QÉ÷òB9Ÿ#]ì"9÷9Ûßjà„Ğ”RÊ
 ç»Äj~¢L–b"ş'3ü*ôÖ‚lßè“¬åw¡}µÌQãKæ©Š"J[æ}'Â1¦ˆ+CI¡ì}§w)}Ì›2B”–ûNuö)}ÖıÌ§%”8·£´uî)}´%”*ÿíæd3G„lüóşÀ?ºø/4ŸÈ¾Ó Âèv¤Ç7ÆA¨XJŸÌ´Q"\LôÀº£n=kªI6Á
 W†å@LIĞµšã^óD…jWbË(4ÚE/%[ºÍ E3òú›zá¾‹:;Á¾‰:;Ş~“œ´ĞÇÑ×ê÷Q×+É¡Lƒ”„Èkcõ ¹0Şşs<˜	B°/VÔ©‘ÒsÍ¯¾É:J!óh ã’Ì´s©nği4µH}Ôüûf¶’õÆH
@@ -6171,7 +6145,7 @@ v_‰*aÃ¨:¯Då¹sO j×Z½ jw†Š‰2v!šÇIŞ¦´©‡Mê<ëß
 í8Ô]¾)&¤¸:6LJ¡ñQ–L½Eß{ëbhŠğ»*FÕ"ÍÒâÙ.ÇyÈ’l!ã}[ø•­×<Í¹²2˜LÉ*kz/ÌœH˜ußo0–„I÷</­4J¯¼½‡¢(Ö/—+îQÏ“ëá{Ü£TéfalÃÈLíûp9_JÏ/Œ í§i‰ñ¡3n‰Ä§pléèµGkd’ağ¡ß ß3-ß%ÿüÏÓ<«®òC!›7„bÔê1ƒû‡âEpRšxNÈ+3š¸E<ô»ıÖq‹OK@mÃ&ûOWƒw×ñÉ\r„Ğ»À@ŸüşUXJeñø!Y&Ï‘l9¬'S ™£˜DË½ªáqèv¶®›_Ë †iŠLÓ¤ŠL~f.É¤£v³€]Óëõ
 äS&’gŒ®•×Mæ 6(˜£ÔN/½Ş¾¥Ê=–³Æ”¢Œ|Èh-üÙ·ù‡í¸¨FÊZg«¶^)fØÓ<œu“H§Ÿk9¿–ä…T± ;ŒÛÛ›½a^P1:_¼y&íZ£ÍßTÁ¬eIa¹±&÷6[êl&Ûí¸kMs¡õYå *)é¿=†˜©gq+×tºÈ¶ù`’ 0ŞóLµ)0oN£¡kù
 ±AòİÙ2L]#;=âù¿gX~8ßÜ“«ÀYØ¨[äcê«OÌ™¶-"s=Ä¢!è—ıh˜mg©¼‡SPë_ü3·weñ©Ğ2gt½QéßÙt6·S_ïß«œWÚ0²x6ZÅNP(œõBXxdrÄ¦/¿M‹Aàz!öV˜®FtÉ¸ÀñÌ…zp÷Ş¿›ÆÓ‚Ğæ,óäÃÇOPaŞ	2c‹À•Ñğ*Âuf9ˆ~=<´Z–xe‰L»š[ùŠÄæVØâèÑ÷mE‹@Q2]Î´@¸iP6éåBMØÑ¡8åÑ¼<B&¢x³¦0)^Æ)mR¤6›I¥“ói/viZ¤n”[ùUĞBo4¥øMŞØÿõfô*ıôT<ÿ¡À4ß¥]çtû½Âù½v«Qÿğ3Ò»?Ê		ïßªg ü&™„¿É/¼å‡LxîD…·G›OP€jÄõó¾¿=BáÙ„Î€ûıÄã¿ntô†÷f˜rGg-YÕpYw˜ıålr„;×D|8T`àõ]©òtVƒ,9îZvì¶‡Œş”uşÛòªåºñ lÃLş®2şñv³RÇ~çÿtúı^£×ïôñüŸÿêüŸŸ
-ô¿‹Bï»×ñrúw›İÖŸŒ–eı˜©©¢¿J¼İğ»×ñ"ú·›8şûıV5şF*Ğo¼üîu¼Œştşªı«T¥*U©JUªR•ªT¥*U©JUªR•ªT¥*U©JUªR•HÿÙdÄ P7 PK    M&=j½³T-	 P8   busyboxUT	 ¡—„L{EMux õ     ¬ı|Õİ?Ÿ™İM–$	I4†(‹DM5è£R¤º(*¶¨ËE¥JíªØÒ–¶Q±¥•êBÂE$6B¸ˆÄ•öá±´-Ejƒ R
+ô¿‹Bï»×ñrúw›İÖŸŒ–eı˜©©¢¿J¼İğ»×ñ"ú·›8şûıV5şF*Ğo¼üîu¼Œştşªı«T¥*U©JUªR•ªT¥*U©JUªR•ªT¥*U©JUªR•HÿÙdÄ P7 PK    M&=j½³T-	 P8   busyboxUT	 ¡—„LtMMux õ     ¬ı|Õİ?Ÿ™İM–$	I4†(‹DM5è£R¤º(*¶¨ËE¥JíªØÒ–¶Q±¥•êBÂE$6B¸ˆÄ•öá±´-Ejƒ R
 -å"{aLd±¢¢¢û¿Ï9“,Ô>Ïóû¾şûz×ÌÎœÛœó9ŸÛù|>çÁ«F]m†ğ~¦¨ü×>]ˆz\W\dá™ğ×‹ğã]‰°ø¾!Qc‰Ä
 •v"“_§îÚb*­şŠ%S@?“ïm©D¦<¼HŒ"O¿íN™(¾ä—¯ëïİá$íô®¿}TêĞïû½{B¦k:®"YHH!¤$iRi$Ri<RiRË„½[»ÂŞá
 16şT†ì¸¼¯ñòâ„SRš½ Ä°´°7¸VøÏ]gd/H/*Qmã[ü‰AnX—ño».5å†X=emÁú[ä{ŸÕ:¯÷Ş¿­9åO´íg½^E¨¿ÈÖm´£í„“ö[mû{‡œ¤?4Èõ‹A®ÕwıƒÜ"Ô_Ä:oõ8ã:_fÃí}ÄŠ‡„X…qeßØ'÷#4Úíe_‘
@@ -7832,4 +7806,4 @@ G}è3p4ƒÚ·úV×äE‘¹&'ri[À²‰¹ÇH›1$$•‘@—LõŒó)ÂÎl&˜†¶q‘4·çÅËw¸eq8¥ÛÏİä
 *‚+áac¥•ŸÒo™ÅsÌóôÖ•°ÏŸ¾£
 ßi%Å´[ñš–“ûWKü ¦oÅç<µUÊ¹ÏÏ8Ši»äü<ÿºö$Şÿ«-rLe¿¸\œáİuu”¬X
 wcŞ‡1ï3ªğ™³xÍbY?…÷¾€Ç7áñsxı©,ëR‚áŒœı.*~¿œÛçîm+-ÿ/†d<>wn[Áîªù:7<¶¢ ıœú´åøÊ^'ßˆ°é“WT2ÿ©ÒéÛ?Lm„íÆ`S¬©Œ;±=wî_)±#œ±eå‚²ç‹êœÏªrÉ9—5ªÊt„ğ·¼¢…×ÿÑïï•Guºù\ìs\³[cìÜe§ÌOıêT×ş»é´ñ™]g¾çç÷}ø¬oİ8ÿ"×Ş¿qh ôÆ’àÙeC>óØÔuuo8ç²O¿û²7l©çGëŞpFÙù·æßtOÉ±Ÿê}ãÛ¾}í;*İşèğÇöÖ¼ÙõĞà÷ûÑCkîŞõÒÀí/~æä›úªúı9?ŞÿÀëÑúÙ¯­Şÿ‡_ÿç§®éh›õÿğ«÷ÿ©ûğVŠ/(†»¶úİÌ>M{%áºVøç*	à‚6êÀÁHp<&ÁgLâÊ…¬|ŒŠî£-ø2)Ò»_Ûp¿“)“ÆÂ³à‹LEÉqºÜ)›mr§y|Y(>*Â—‰Ä±4ğM¤²’¾qÃâpå“‰“O®S|–EKÔ;Ó~úİ'1€ÓcŸC¸Ò‘ïqÌ÷8Æ/<m÷!ó³ù.‡‡ºlÑòÎÛÿÒ“˜ïIÌ÷\·İ‹•{Oğ8ò=†4ò±ê*q89¯¼É—¾c¢¥Oc¾'Áf¾İ`ï“Ñ¶†*'Ô¢uL¥ËU¾ÌWrŠ|ì±Q¾
-ÌWqŠ|GÏ]Šù–"ß¸#_æ«Â|/.’/åÈWÑˆÏm\˜BÖù¾475!}-^XŞqP~7)FZ^¶Û¯ÃÎg~«$OÚL§|ÎïërÄÇÀY˜ï­‹äû PK    ‚ª‹=sÌë3 Î2           ¤    stage2.tar.gzUT sMMux õ     PK    M&=j½³T-	 P8           ¤z busyboxUT ¡—„Lux õ     PK          J!   
+ÌWqŠ|GÏ]Šù–"ß¸#_æ«Â|/.’/åÈWÑˆÏm\˜BÖù¾475!}-^XŞqP~7)FZ^¶Û¯ÃÎg~«$OÚL§|ÎïërÄÇÀY˜ï­‹äû PK    |Œ=ÈGƒ3 Î2           ¤    stage2.tar.gzUT ëMux õ     PK    M&=j½³T-	 P8           ¤z busyboxUT ¡—„Lux õ     PK          J!   

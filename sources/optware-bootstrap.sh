@@ -175,29 +175,6 @@ getipkg() {
 	echo "OK"
 }
 
-# temporarily not used
-#
-# Name:        doprofile
-# Arguments:   none
-# Description: Sets up /etc/profile.d/
-doprofile() {
-	log "Adding /opt/bin to the default \$PATH: "
-	echo -n "Adding /opt/bin to the default \$PATH: "
-	mkdir -p /etc/profile.d || error "Failed to create /etc/profile.d" || return 1
-	cat <<EOF > /etc/profile.d/optware
-umask 022
-export TERM=linux
-export PATH='/opt/bin:/opt/sbin:/opt/local/bin:/system/xbin:/system/sbin:/system/bin'
-export PS1='\u@\h:\w\\$ '
-EOF
-	if [ "$?" -ne 0 ] ; then
-		error "Failed to create /etc/profile.d/optware" || return 1
-	fi
-	log "OK"
-	echo "OK"
-}
-
-
 # Name:        updateipkg
 # Arguments:   none
 # Description: Update the Optware package database
@@ -275,7 +252,6 @@ mkuser() {
 			fi
 			if [ -n "$MYUSER" ] ; then
 				adduser -h /opt/home/$MYUSER -s /opt/bin/bash $MYUSER || MYUSER=""
-				echo 'source /etc/profile.d/optware' > /opt/home/$MYUSER/.bash_profile
 			fi
 		fi
 	done
@@ -466,6 +442,13 @@ done;  hash -r
 [ ! -e /data/opt/etc/group ]  && echo 'root:x:0:'  > /data/opt/etc/group
 [ ! -e /data/opt/etc/shells ] && echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
 
+# make a reasonable /etc/profile
+cat > /opt/etc/profile << EOF
+export PS1='[\u@\h \W]\\$ '
+export PATH='/system/xbin:/opt/sbin:/opt/bin:/sbin:/sbin:/system/sbin:/system/bin'
+export LD_LIBRARY_PATH='/opt/lib:/system/lib'
+EOF
+
 # Perm symlinks
 for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
 	if [ ! -e /etc/$FILE ]; then 
@@ -476,6 +459,7 @@ for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
 	fi
 done
 
+# all dynamic executables really expect to see ld-linux.so.3 in /lib
 [ ! -e /lib/ld-linux.so.3 ] && ln -s /opt/lib/ld-linux.so.3 /lib/ld-linux.so.3
 
 
@@ -550,16 +534,6 @@ else
 	echo "/opt/etc/ipkg/optware.conf is already up to date"
 fi
 
-
-# Check that /opt/bin and /opt/sbin are part of the default $PATH, and if not, make it so
-if [ ! -f /etc/profile.d/optware ] ; then
-	mkdir -p /etc/profile.d || error "Failed to create /etc/profile.d" || exit 1
-fi
-touch /etc/profile.d/optware || error "Failed to modify /etc/profile.d/optware" || exit 1
-grep PATH= /etc/profile.d/optware | grep -q "/opt/bin"
-RESULT_A="$?"
-grep PATH= /etc/profile.d/optware | grep -q "/opt/sbin"
-RESULT_B="$?"
 
 #if [ "$RESULT_A" -ne 0 ] || [ "$RESULT_B" -ne 0 ] ; then
 #	doprofile || exit 1
