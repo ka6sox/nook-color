@@ -94,20 +94,6 @@ error() {
 }
 
 
-# Name:        mkopt
-# Arguments:   none
-# Description: Creates /var/opt and mounts it at /opt
-mkopt() {
-	log "Creating new /opt directory: "
-	echo -n "Creating new /opt directory: "
-	mkdir -p /data/opt || error "Failed to create /data/opt" || return 1
-	mkdir -p /opt || error "Failed to create /opt" || return 1
-	mount -o bind /data/opt /opt || error "Failed to mount /opt" || return 1
-	log "OK"
-	echo "OK"
-}
-
-
 # Name:        get_version
 # Arguments:   Package
 # Description: Checks to see if Package is installed, or if there is an upgrade
@@ -476,7 +462,7 @@ done;  hash -r
 [ ! -e /data/opt/etc/resolv.conf ] && echo 'nameserver 8.8.8.8' > /data/opt/etc/resolv.conf
 
 # some attempt at actual users
-[ ! -e /data/opt/etc/passwd ] && echo 'root:x:0:0:root:/opt/home/root:/bin/bash' > /data/opt/etc/passwd
+[ ! -e /data/opt/etc/passwd ] && echo 'root:x:0:0:root:/opt/home/root:/opt/bin/bash' > /data/opt/etc/passwd
 [ ! -e /data/opt/etc/group ]  && echo 'root:x:0:'  > /data/opt/etc/group
 [ ! -e /data/opt/etc/shells ] && echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
 
@@ -591,6 +577,15 @@ updateipkg || exit 1
 mkuser || exit 1
 
 # Check that sudo is installed, and if not, or if there is an upgrade available, install it
+get_version busybox
+
+if [ "$?" -eq 1 ] ; then
+	installpkg busybox || exit 1
+else
+	log "busybox is already installed and no upgrades are available"
+	echo "busybox is already installed and no upgrades are available"
+fi
+
 get_version sudo
 if [ "$?" -eq 1 ] ; then
 	installpkg sudo || exit 1
@@ -598,7 +593,6 @@ else
 	log "sudo is already installed and no upgrades are available"
 	echo "sudo is already installed and no upgrades are available"
 fi
-
 
 # Check that root privileges are enabled for our user, and if not, make it so
 if [ ! -f /opt/etc/sudoers ] ; then
@@ -680,7 +674,7 @@ fi
 # log "OK"
 # echo "OK"
 echo
-echo "Beginning rebuild of ramdisk to persist all this."
+echo "Beginning rebuild of ramdisk to add optware-init service to /init.rc to persist all this."
 patchramdisk
 echo
 log "Setup complete"
