@@ -247,7 +247,7 @@ mkuser() {
 doprofile()  {
 cat > /opt/etc/profile << EOF
 export PS1='[\u@\h \W]\\$ '
-export PATH='/system/xbin:/opt/sbin:/opt/bin:/sbin:/sbin:/system/sbin:/system/bin'
+export PATH='/opt/sbin:/opt/bin:/system/xbin:/sbin:/system/sbin:/system/bin'
 export LD_LIBRARY_PATH='/opt/lib:/system/lib'
 EOF
 }
@@ -537,7 +537,7 @@ else
 fi
 
 # Install supplementary packages
-smart_install busybox bash sed cpio less openssh openssh-sftp-server
+smart_install bash sed cpio less openssh openssh-sftp-server
 doprofile
 
 echo
