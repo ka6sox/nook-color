@@ -16,38 +16,22 @@
 # 7.  Create an unprivledged user
 # 8.  Installs sudo
 # 9.  Configures sudo privs for the user created above
-# 10. Installs and configures dropbear
-# 11. Installs openssh and openssh-sftp-server
-# 12. does not yet start dropbear
+# 10. Installs openssh and openssh-sftp-server
+# 11. Patches ramdisk to configure environment on boot on nook color
 
 ### VARIABLES: GENERAL
 
-# run with something like:  sh /data/opt.shar
-# export PATH=/opt/bin:/system/xbin:$PATH  can come in helpful afterwards if something went wrong
-
-# temp preclean
-#/system/xbin/busybox rm -f /opt /var /lib /bin  /system/etc/resolv.conf /system/etc/nsswitch.conf /system/etc/mtab /system/etc/group /system/etc/passwd /lib/ld-linux.so.3
-#/system/xbin/busybox rm -f /system/etc/shells
-#/system/xbin/busybox rm -rf /system/xbin /data/opt /data/tmp 
-
-
-# SCRIPTNAME="$(basename $0)"
-# LOG=/data/tmp/${SCRIPTNAME}.log
-LOG=/data/tmp/optware-bootstrap.log
 MYUSER=""
+
+LOG=/data/tmp/optware-bootstrap.log
 PATH="/system/xbin:/opt/sbin:/opt/bin:/opt/local/bin:/sbin:/system/sbin:/system/bin"
 LD_LIBRARY_PATH="/opt/lib:/system/lib"
 
-# ARCH=$(uname -m)
-
-FEED_URL="http://ipkg.nslu2-linux.org/feeds/optware"
 ARCH=armv7l
+FEED_URL="http://ipkg.nslu2-linux.org/feeds/optware"
 FEED_ARCH=cs08q1armel
 
-### VARABLES: LOCAL
-
 TMP=/data/tmp/optware-$$
-BUSYBOX="$TMP/busybox"
 
 ### END of VARIABLES
 
@@ -257,6 +241,18 @@ mkuser() {
 	done
 }
 
+# Name:        doprofile
+# Arguments:   Username
+# Description: Make a reasonable /etc/profile
+doprofile()  {
+cat > /opt/etc/profile << EOF
+export PS1='[\u@\h \W]\\$ '
+export PATH='/system/xbin:/opt/sbin:/opt/bin:/sbin:/sbin:/system/sbin:/system/bin'
+export LD_LIBRARY_PATH='/opt/lib:/system/lib'
+EOF
+}
+
+
 
 # Name:        dosudo
 # Arguments:   Username
@@ -286,38 +282,23 @@ installpkg() {
 	done
 }
 
+# Name:        smart_install
+# Arguments:   Package1 [Package2] [Package3] [...]
+# Description: Installs Package
 
-# Name:        dodropbear
-# Arguments:   none
-# Description: Configures dropbear's startup options
-dodropbear() {
-	if [ -f /etc/event.d/optware-dropbear ] ; then
-		log "/etc/event.d/optware-dropbear exists"
-		echo
-		echo
-		echo "/etc/event.d/optware-dropbear already exists"
-		yesno "Would you like to replace it with the latest version?"
-		if [ "$?" -eq 0 ] ; then
-			echo
-			echo
-			return
+
+smart_install() {
+	for pkg in "$@" ; do
+		get_version $pkg
+		if [ "$?" -eq 1 ] ; then
+			installpkg $pkg || exit 1
 		else
-			echo
-			echo
-			echo -n "Removing /etc/event.d/optware-dropbear: "
-			rm /etc/event.d/optware-dropbear || error "Failed to remove /etc/event.d/optware-dropbear" || return 1
-			log "Removed /etc/event.d/optware-dropbear"
-			echo "OK"
+			log "$pkg is already installed and no upgrades are available"
+			echo "$pkg is already installed and no upgrades are available"
 		fi
-	fi
-	log "Configuring the Dropbear upstart script: "
-	echo -n "Configuring the Dropbear upstart script: "
-	cd /etc/event.d || error "Failed to change directory to /etc/event.d" || return 1
-	wget http://gitorious.org/webos-internals/bootstrap/blobs/raw/master/etc/event.d/optware-dropbear >> "$LOG" 2>&1 \
-		|| error "Failed to download optware-dropbear upstart script" || return 1
-	log "OK"
-	echo "OK"
+	done
 }
+
 
 # Name:        patchramdisk
 # Arguments:   none
@@ -348,9 +329,8 @@ patchramdisk() {
 			cp init.rc $TMP/init.rc.bak
 			cat >> init.rc << EOF
 
-service optware-init /system/bin/sh /data/opt/sbin/optware-init.sh
+service optware-init /system/bin/sh /data/opt/etc/optware-init.sh
 	user root
-	group system
 	oneshot
 EOF
 			find . -regex "./.*"| cpio -o -H newc | gzip > $TMP/ramdisk.gz
@@ -443,11 +423,6 @@ done;  hash -r
 [ ! -e /data/opt/etc/shells ] && echo -e '/system/bin/sh\n/bin/sh\n/data/opt/bin/bash\n/opt/bin/bash' > /data/opt/etc/shells
 
 # make a reasonable /etc/profile
-cat > /opt/etc/profile << EOF
-export PS1='[\u@\h \W]\\$ '
-export PATH='/system/xbin:/opt/sbin:/opt/bin:/sbin:/sbin:/system/sbin:/system/bin'
-export LD_LIBRARY_PATH='/opt/lib:/system/lib'
-EOF
 
 # Perm symlinks
 for FILE in nsswitch.conf resolv.conf passwd group shells profile; do
@@ -534,15 +509,6 @@ else
 	echo "/opt/etc/ipkg/optware.conf is already up to date"
 fi
 
-
-#if [ "$RESULT_A" -ne 0 ] || [ "$RESULT_B" -ne 0 ] ; then
-#	doprofile || exit 1
-#else
-#	log "/etc/profile.d/optware is already up to date"
-#	echo "/etc/profile.d/optware is already up to date"
-#fi
-
-
 # Update the Optware package database (we can do this no matter what)
 updateipkg || exit 1
 
@@ -551,22 +517,8 @@ updateipkg || exit 1
 mkuser || exit 1
 
 # Check that sudo is installed, and if not, or if there is an upgrade available, install it
-get_version busybox
 
-if [ "$?" -eq 1 ] ; then
-	installpkg busybox || exit 1
-else
-	log "busybox is already installed and no upgrades are available"
-	echo "busybox is already installed and no upgrades are available"
-fi
-
-get_version sudo
-if [ "$?" -eq 1 ] ; then
-	installpkg sudo || exit 1
-else
-	log "sudo is already installed and no upgrades are available"
-	echo "sudo is already installed and no upgrades are available"
-fi
+smart_install sudo
 
 # Check that root privileges are enabled for our user, and if not, make it so
 if [ ! -f /opt/etc/sudoers ] ; then
@@ -582,71 +534,10 @@ else
 	echo "/opt/etc/sudoers is already up to date"
 fi
 
-# Check that bash is installed, and if not, or if there is an upgrade available, install it
-get_version bash
-if [ "$?" -eq 1 ] ; then
-	installpkg bash || exit 1
-else
-	log "Bash is already installed and no upgrades are available"
-	echo "Bash is already installed and no upgrades are available"
-fi
+# Install supplementary packages
+smart_install busybox bash sed cpio openssh openssh-sftp-server
+doprofile
 
-# Check that sed is installed, and if not, or if there is an upgrade available, install it
-get_version sed
-if [ "$?" -eq 1 ] ; then
-	installpkg sed || exit 1
-else
-	log "sed is already installed and no upgrades are available"
-	echo "sed is already installed and no upgrades are available"
-fi
-
-# Check that cpio is installed, and if not, or if there is an upgrade available, install it
-get_version cpio
-if [ "$?" -eq 1 ] ; then
-	installpkg cpio || exit 1
-else
-	log "cpio is already installed and no upgrades are available"
-	echo "cpio is already installed and no upgrades are available"
-fi
-
-
-# Check that dropbear is installed, and if not, or if there is an upgrade available, install it
-get_version dropbear
-if [ "$?" -eq 1 ] ; then
-	installpkg dropbear || exit 1
-	pkill dropbear > /dev/null 2>&1
-	pkill -9 dropbear > /dev/null 2>&1
-#	dodropbear || exit 1
-else
-	log "Dropbear is already installed and no upgrades are available"
-	echo "Dropbear is already installed and no upgrades are available"
-fi
-
-# Check that openssh is installed, and if not, or if there is an upgrade, install it
-get_version openssh
-if [ "$?" -eq 1 ] ; then
-	installpkg openssh || exit 1
-	pkill sshd > /dev/null 2>&1
-	pkill -9 sshd > /dev/null 2>&1
-else
-	log "OpenSSH is already installed and no upgrades are available"
-	echo "OpenSSH is already installed and no upgrades are available"
-fi
-
-# Check that openssh-sftp-server is installed, and if not, or if there is an upgrade, install it
-get_version openssh-sftp-server
-if [ "$?" -eq 1 ] ; then
-	installpkg openssh-sftp-server || exit 1
-else
-	log "OpenSSH sFTP server is already installed and no upgrades are available"
-	echo "OpenSSH sFTP server is already installed and no upgrades are available"
-fi
-
-# log "Starting the Dropbear SSH daemon:"
-# echo -n "Starting the Dropbear SSH daemon:"
-# initctl start optware-dropbear >> "$LOG" 2>&1 || error "Failed to start the Dropbear SSH daemon:" || exit 1
-# log "OK"
-# echo "OK"
 echo
 echo "Beginning rebuild of ramdisk to add optware-init service to /init.rc to persist all this."
 patchramdisk
