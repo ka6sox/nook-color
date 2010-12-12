@@ -535,7 +535,7 @@ else
 fi
 
 # Install supplementary packages
-smart_install busybox bash sed cpio openssh openssh-sftp-server
+smart_install busybox bash sed cpio less openssh openssh-sftp-server
 doprofile
 
 echo
