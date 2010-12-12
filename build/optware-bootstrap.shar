@@ -325,7 +325,9 @@ patchramdisk() {
 			echo -n "Patching Ramdisk: "
 			log "Patching Ramdisk: "
 			mount -o remount,rw /mnt
-			cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.bak
+			if [ ! -e $TMP/mnt/$RDFILE.pre-optware ]; then
+				cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.pre-optware
+			fi
 			cp init.rc $TMP/init.rc.bak
 			cat >> init.rc << EOF
 
@@ -545,7 +547,7 @@ echo
 log "Setup complete"
 echo "Setup complete"
 exit 0
-PK    0zŒ=t¬HQ ù4   stage2.tar.gzUT	 ûIMEHMux õ     ”·uP[Ý.Ü"ÅŠwJ)VÜJñâ¥-îîîÜµ¸»´¸Kpw÷àÁ$Û÷7ßÌwÿ½“gö™gíe'kí9kÓÄ ¿zR@U~…|¦ëïôýG ÷¢ÿ¹uÉƒõ%-ÊÛ|üa%óÅŸ;xéïœÌ°þüJD™ÈªýJŽÑ1ù]7“®x¾ê‚sm‚ýÓ‡ö³·<¶ÚÂš²ÌîT_ÙHØæ?*/ŒqFš7n®Uä-‰^V¬O\@“m‡ë®Sb‡ë0áfO~BýJýáü 0ü~ê”F›ú÷*—»9L,Å·Å%ýLì’¾ÆÛ¢ÅòsŠìLšpÝwµöKîÕ…îº¾}«´Û¯ZlŒŽv^„çŸZ[8rpÌ:_n&9¤W˜X³D ›ùKxÿS­]§0çõ³D+ÞÊ?Ù8å)ØÏÓ”‡¨M~¨(úåýýÂ²ú[2<í¶›mÞ÷Eø=¼L÷=Å¨UbŠcKÄ µ¹è$`_?ÅšúM1‡êXéKKŸ€OSH]ajf|oîû—™~6ƒò_Bï¿ñC}ãÞíÜ}Ržþ~½RpÒ¯Q:¤´²nq¯¹øÃÊÓõ:˜)šý®øVD ø×!u‰I?mÑŸ¯ºLº¾¶—ýZðÔ6€0°`!VËS—ø¦lì´7„Ê‹Ý'õ¨Í6I6]DÆ¾m«ÁB#Rx)˜{MUä²˜­b-–E[x-hõ£Rbe²¤n¤1yÆÍ‘Èç¨¾wÛ$•]ëE•3;$J@8Ÿo)v+w¤¸ÉN­:­ñg÷³~éËßê´jøpEŸ&'Òê¹Å•ÝŽ<žJ·C~0xW¡\)½°Îò«ƒƒRïúä}¥ý	.ó	î:ÔÁ'»(ö8¾ $g$ôoOåé'…·0@RÂ´'þß½ºk¦^ù}žSÃy2•WW>‡WÔÒRªƒ¾ÓžP¼}Ÿ%øÄU€"ç?ž$Oƒ™Opéì	ï(o‰îßÛ“ÜÍÉwHwQ^Â¤ÅÂæéOJ”#Ÿæq£ž†äå¤Ÿqå‡dü1¶¦¢Ÿˆ?"B<ôËï`i¿“wë
+PK    !{Œ=6ë	úQ ù4   stage2.tar.gzUT	 ½KMìJMux õ     ”·uP[Ý.Ü"ÅŠwJ)VÜJñâ¥-îîîÜµ¸»´¸Kpw÷àÁ$Û÷7ßÌwÿ½“gö™gíe'kí9kÓÄ ¿êTDU~…|¦ëïôýG ÷¢ÿ¹uÉƒõ%-ÊÛ|üa%óÅŸ;xéïœÌ°þüJD™ÈªýJŽÑ1ù]7“®x¾ê‚sm‚ýÓ‡ö³·<¶ÚÂš²ÌîT_ÙHØæ?*/ŒqFš7n®Uä-‰^V¬O\@“m‡ë®Sb‡ë0áfO~BýJýáü 0ü~ê”F›ú÷*—»9L,Å·Å%ýLì’¾ÆÛ¢ÅòsŠìLšpÝwµöKîÕ…îº¾}«´Û¯ZlŒŽv^„çŸZ[8rpÌ:_n&9¤W˜X³D ›ùKxÿS­]§0çõ³D+ÞÊ?Ù8å)ØÏÓ”‡¨M~¨(úåýýÂ²ú[2<í¶›mÞ÷Eø=¼L÷=Å¨UbŠcKÄ µ¹è$`_?ÅšúM1‡êXéKKŸ€OSH]ajf|oîû—™~6ƒò_Bï¿ñC}ãÞíÜ}Ržþ~½RpÒ¯Q:¤´²nq¯¹øÃÊÓõ:˜)šý®øVD ø×!u‰I?mÑŸ¯ºLº¾¶—ýZðÔ6€0°`!VËS—ø¦lì´7„Ê‹Ý'õ¨Í6I6]DÆ¾m«ÁB#Rx)˜{MUä²˜­b-–E[x-hõ£Rbe²¤n¤1yÆÍ‘Èç¨¾wÛ$•]ëE•3;$J@8Ÿo)v+w¤¸ÉN­:­ñg÷³~éËßê´jøpEŸ&'Òê¹Å•ÝŽ<žJ·C~0xW¡\)½°Îò«ƒƒRïúä}¥ý	.ó	î:ÔÁ'»(ö8¾ $g$ôoOåé'…·0@RÂ´'þß½ºk¦^ù}žSÃy2•WW>‡WÔÒRªƒ¾ÓžP¼}Ÿ%øÄU€"ç?ž$Oƒ™Opéì	ï(o‰îßÛ“ÜÍÉwHwQ^Â¤ÅÂæéOJ”#Ÿæq£ž†äå¤Ÿqå‡dü1¶¦¢Ÿˆ?"B<ôËï`i¿“wë
 ¨ñŸuÕ—džaò¨EÉˆŠ—ß~âÀ]Ô¶%ŸÔTÖa­6èOÈí¦rÝÝ¨Ì<1›ONVÃWSã*uy[æ5—š›´6SXÛšK³ôt;Ûu*_Æ|ÿ¬¯,¿s´2œþ¾633½¯-ß·43}Ó>9øwqfqsß°´ÚÆÞÖ*×Îñ·­ƒ†÷šNµ½{§”î’ˆ—@êéÅû%Í––¡æƒðƒöŽÕæƒƒU~ûþö-¦öŠTÛ|Æ¤n¼ý=’R¾¾Š¶î¶úöõvå3§;qØ«ŸÈ9wª=5[³ýþþ©ùÝ\,ÉWëPÔYÓRÜ³÷»¸¦ÅœHç„ëÏb=±«ýb–f+Ú96[ó1Wsô¡›¥eŽÀôôD5´ÂO(vzçEž”µÿ`uØ^Ù×”2§Y€· ‘€Š7êÇŸ:§žà“6×¯Ma©uíV8BŸµœ§ÆˆÅNð)–Ñ&"Ñ2{zÝºqÿsÒ†Õ„zäÒMò‹rÃŠzgVupÏ³¯ãØ,CüÏ'êà¹«â ¡’QÉ÷òB9Ÿ#]ì"9÷9ÛßŽjà„Ð”RÊ
 ç»Äj~¢L–b"þ'3ü*ôÖ‚lßè“¬åw¡}µÌQãKæ©Š"J[æ}'Â1¦ˆ+CI¡ì}§w)}Ì›2B”–ûNuö)}ÖýÌ§%”8·£´uî)}´%”*ÿíæd3G„lüóþÀ?ºø/4ŽŸÈ¾Ó Âèv¤Ç7ÆŽA¨XJŸÌ´Q"\LôÀº£n=kªI6Á
 W†å@LIÐµšã^óD…jWbË(4ÚE/%[ºÍ E3òú›zá¾‹:;Á¾‰:;Þ~“œ´ÐÇÑ×ê÷Q×+É¡Lƒ”„Èkcõ ¹0Þþs<˜	B°/VÔ©‘ÒsÍ¯¾É:J!óh ã’Ì´s©nði4µH}Ôüûf¶’õÆH
@@ -6010,7 +6012,7 @@ m}æ7Om0D\spâcƒe:€Ù$#ßÕ%Ç"Ä5qËPhT¤]:6ÁÏa@tqþ÷:ýÎ sÚé:82ü´‰hßsã(ÂSÀXûÍ!3 
 ®ÿà»º0÷§ÏSjŒÌ±¡üè
 t¯Ñí•#·~– KÔoÐSÈŽLl“ìPtÏÓ˜áu¯õ¦XC™vËv¥8z°“H#t3ý:£œü©êhDLkˆÀ|\¤®ßˆúÆp¼…‡©)<îª8U«2H‹ívb9)K’"ÆÞÛÂŸÌ{Í¶9O6†	“9yÅÑ¦÷£"Äô5:Dïï0—¸K÷;ÜË­4Kˆ®¼›ÏãùR”ÃÐ¯ãUßQ¿çw—oyrÒ¤WD‰33·¿EÙª”^_™Ú¥iñù¡ÜÚ8ày`K'¯Ý*‰ÉÑ“ãâ‰xúìYÄßÿ<®bnuÕoòYÁå©ÍcëÊäÉIyê;³ÌhãæùÐoºÖ	±*¶|rZj5Ù÷øu5xvž¬¥@=Lôù_¹§T¢'›4K7O‰,[=tS×@6
 ž’˜$ËzU£ãÐ9íÌ»n~­¦É+M“2Ù=3#—ŽÚÍŽwÍx<®ˆOÙHžpfh+—,³¤6M(X£´N]¾¾¥®{l5\Êv0Ä@° ·ð¿½lÇC5R¶ºÜõF±ÂvE:kÓ’N—å:WE!U*ÅŽ’án¶ö•¢³ô…WTÒ›A%Yñ¤
-e­J.–-y‹"Ó‡-T˜Ìo‡£€u­i®cô>«#€0¥üwç“zã²DÐå"yÖ0HÂÊ|•*+P°ÓëéZ¾"lXùîm™¦®‰n±ý¿ *¬ Z5÷ä6tÖ6ê•õ1Ô;æR{-Ž2ž…bÑê Œ~ûÑ0}z¥;ñ7 v¿ï|½«H.œH18åz£Ò¿Kw¹²ó@ïß%S9ÖhÏ(’g£mâØô…Â)ß!‚•[æD6ùË­&ëH,ZazšÐDð`Ä³Q¨'wïû÷nâVmVež¿ûð 3v,¸2^%XVÖ“èËé¡Õ°Ù¡UñG–Ä”eWS# aKX$6ãÂæŸ};T´\JÜueÁq+‚sÃ”ªI/çjÂžÅ-/ŒWõ}*‘Ä«r1…Mñ&Éé%Eâ	†™T:Y=½‹]Û©å«ü*h¥WšRüJ0û¿~½-¿¼T¿ÿP4?¤ƒ¿ÿ1Æý¿Ë¢uþgð$Ëÿù÷ùãéV?¥çÉtz:îOGôý—Á ×~ÿåW”ŠüïãÈÿám.ÿ“þÉ€ÍÿŸÂZZù«òÇÓí~xÉØÇùz:hçÿ¯(ùã‰‡?¼ÃäOß •[ÚÒ–¶´¥-miK[ÚÒ–¶´¥-miK[ÚòÒò_nµÙÑ P7 PK    M&=j½³T-	 P8   busyboxUT	 ¡—„LEHMux õ     ¬ý|ÕÝ?ŽŸ™ÝM–$	I4†(‹DM5è£R¤º(*¶¨ËE¥JíªØÒ–¶Q±¥•êBÂE$6B¸ˆÄ•öá±´-Ejƒ R
+e­J.–-y‹"Ó‡-T˜Ìo‡£€u­i®cô>«#€0¥üwç“zã²DÐå"yÖ0HÂÊ|•*+P°ÓëéZ¾"lXùîm™¦®‰n±ý¿ *¬ Z5÷ä6tÖ6ê•õ1Ô;æR{-Ž2ž…bÑê Œ~ûÑ0}z¥;ñ7 v¿ï|½«H.œH18åz£Ò¿Kw¹²ó@ïß%S9ÖhÏ(’g£mâØô…Â)ß!‚•[æD6ùË­&ëH,ZazšÐDð`Ä³Q¨'wïû÷nâVmVež¿ûð 3v,¸2^%XVÖ“èËé¡Õ°Ù¡UñG–Ä”eWS# aKX$6ãÂæŸ};T´\JÜueÁq+‚sÃ”ªI/çjÂžÅ-/ŒWõ}*‘Ä«r1…Mñ&Éé%Eâ	†™T:Y=½‹]Û©å«ü*h¥WšRüJ0û¿~½-¿¼T¿ÿP4?¤ƒ¿ÿ1Æý¿Ë¢uþgð$Ëÿù÷ùãéV?¥çÉtz:îOGôý—Á ×~ÿåW”ŠüïãÈÿám.ÿ“þÉ€ÍÿŸÂZZù«òÇÓí~xÉØÇùz:hçÿ¯(ùã‰‡?¼ÃäOß •[ÚÒ–¶´¥-miK[ÚÒ–¶´¥-miK[ÚòÒò_nµÙÑ P7 PK    M&=j½³T-	 P8   busyboxUT	 ¡—„LìJMux õ     ¬ý|ÕÝ?ŽŸ™ÝM–$	I4†(‹DM5è£R¤º(*¶¨ËE¥JíªØÒ–¶Q±¥•êBÂE$6B¸ˆÄ•öá±´-Ejƒ R
 -å"{aLd±¢¢¢û¿Ï9“,Ô>Ïóû¾þûz×ÌÎœÛœó9ŸÛù|>çÁ«F]m†ð~¦¨ü×>]ˆz\W\dá™ð×‹ðã]‰°ø¾!Qc‰Ä
 •v"“_§îÚb*­þŠ%S@?“ïm©D¦<¼HŒ"O¿íN™(¾ä—¯ëïÝá$íô®¿}TêÐïû½{B¦k:®"YHH!¤$iRi$Ri<RiRË„½[Ž»ÂÞá
 16þT†ì¸¼¯ñòâ„SRš½ Ä°´°7¸VøÏ]gd/H/*Qmã[ü‰AnX—ño».5å†X=emÁú[ä{ŸÕ:¯÷Þ¿­9åO´íg½^E¨¿ÈÖm´£í„“ö[mû{‡œ¤?4Èõ‹A®ÕwýƒÜ"Ô_Ä:oõ8ã:_fÃí}ÄŠ‡„X…qeßØ'÷#4Úíe_‘
@@ -7671,4 +7673,4 @@ G}Žè3p4ƒÚ·úV×äE‘¹&'ri[À²‰¹ÇH›1$$•‘@—LõŒó)ÂÎl&˜†¶q‘4·çÅËw¸eqž8¥ÛÏÝä
 *‚+áac¥•ŸÒo™ÅsÌóôÖ•°ÏŸ¾£
 ßi%Å´[ñš–“ûWKü ¦oÅç<µUÊ¹ÏÏ8Ši»äü<ÿºö$Þÿ«-rLe¿¸\œáÝuu”¬X
 wcÞ‡1ï3ªð™³xžÍbY?…÷¾€Ç7áñsxý©,ëR‚áŒœý.*~¿œÛçîm+-ÿ/ž†d<>wn[Áîªù:7<¶¢ ýœú´åøÊ^'ßˆ°éž“WT2ÿ©ÒéÛ?Lm„íÆ`S¬©Œ;±=wî_)±#œ±eå‚²ç‹êœÏªrÉ9—5ªÊt„ð·¼¢…×ÿÑïï•Guºù\ìs\³[cìÜe§ÌOýêT×þ»é´ñ™]g¾çç÷}ø¬oÝž8ÿ"×Þ¿qh ôÆ’àÙeC>óØÔuuo8ç²O¿û²7l©çGëÞpFÙù·æßtOÉ±Ÿê}ãÛ¾}í;*ÝþèðÇöÖ¼ÙõÐà÷ûÑCkîÞõÒÀí/~æä›úªúý9?ÞÿÀëÑúÙ¯­Þÿ‡_ÿç§®éh›õÿð«÷ÿ©ûðVŠ/(†»¶žúÝÌ>M{%áºVøç*	à‚6êÀÁHp<&ÁgLâÊ…¬|ŒŠî£-ø2)Ò»_Ûp¿“)“ÆÂ³à‹LŽEÉqºÜ)›mr§y|Y(>*Â—‰Ä±4ðM¤²’¾qÃâpå“‰“O®S|–EKÔ;Ó~úÝ'1€ÓcŸC¸Ò‘ïqÌ÷8Æ/<m÷!óž³ù.‡‡ºlÑòÎÛÿÒ“˜ïIÌ÷\·Ý‹•{Oð8ò=†4ò±ê*q89¯¼É—¾c¢¥Oc¾'Áf¾Ý`ï“Ñ¶†*'Ô¢uL¥ËU¾ÌWrŠ|ì±Q¾
-ÌWqŠ|GÏ]Šù–ž"ß¸#_æ«Â|/.’/åÈWÑˆÏm\˜BÖù¾475!}-^XÞqP~7)FZ^¶Û¯ÃÎg~«$OÚL§|ÎïërÄŽÇÀY˜ï­‹äû PK    0zŒ=t¬HQ ù4           ¤    stage2.tar.gzUT ûIMux õ     PK    M&=j½³T-	 P8           ¤˜ busyboxUT ¡—„Lux õ     PK          -M!   
+ÌWqŠ|GÏ]Šù–ž"ß¸#_æ«Â|/.’/åÈWÑˆÏm\˜BÖù¾475!}-^XÞqP~7)FZ^¶Û¯ÃÎg~«$OÚL§|ÎïërÄŽÇÀY˜ï­‹äû PK    !{Œ=6ë	úQ ù4           ¤    stage2.tar.gzUT ½KMux õ     PK    M&=j½³T-	 P8           ¤˜ busyboxUT ¡—„Lux õ     PK          -M!   

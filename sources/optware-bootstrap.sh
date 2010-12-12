@@ -325,7 +325,9 @@ patchramdisk() {
 			echo -n "Patching Ramdisk: "
 			log "Patching Ramdisk: "
 			mount -o remount,rw /mnt
-			cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.bak
+			if [ ! -e $TMP/mnt/$RDFILE.pre-optware ]; then
+				cp $TMP/mnt/$RDFILE $TMP/mnt/$RDFILE.pre-optware
+			fi
 			cp init.rc $TMP/init.rc.bak
 			cat >> init.rc << EOF
 
