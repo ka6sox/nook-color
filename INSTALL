@@ -1,1 +1,43 @@
-export PATH=/opt/bin:/opt/sbin:$PATH; for FS in / /data /system; do mount -o remount,rw,suid $FS; done; ln -s /data/opt /opt; ln -s /data/opt/var /var; ln -s /data/opt/home /home; ln -s /system/bin /bin; ln -s /system/lib /lib
+Welcome to an early version of optware for android
+
+To install requires a functional root shell on your device.  Simply
+put the optware-bootstrap.shar into somewhere writeable like /data
+and run it with  "sh optware-bootstrap.shar"
+
+Example:
+
+adb push optware-bootstrap.shar /data
+adb shell
+
+# sh /data/optware-bootstrap.shar
+
+When done, reboot and verify you can run /opt/bin/bash for instance.
+
+
+NOTE:  
+
+The default adb shell is not great for running optware.  You
+could manually run  /opt/bin/bash  and source /etc/profile but
+an easier way is just to ssh in with your newly created user.
+
+Since dropbear does not yet autostart on boot, start it with:
+
+/opt/sbin/dropbear
+
+Then ssh to your device's IP address. You may want to prevent
+your device from sleeping or keep a running ping to google.com or 
+similar to keep the connection alive for your ssh session.
+
+Easier local options are forthcoming.
+
+
+IF UPGRADING
+
+For now if you have an earlier version of optware already installed
+it is recommended to start clean.  Currently the installer will skip
+creating /data/opt if it exists.  This is a good idea, but unfortunately
+important files introduced in this version will also not get copied.
+
+This bug will be corrected but for now, please rename /data/opt 
+to /data/opt.old or similar before starting and reboot to clear links
+or mounts in the root filesystem
