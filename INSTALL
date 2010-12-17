@@ -1,43 +1,127 @@
-Welcome to an early version of optware for android
+Welcome to an early version of optware for android 
 
-To install requires a functional root shell on your device.  Simply
-put the optware-bootstrap.shar into somewhere writeable like /data
-and run it with  "sh optware-bootstrap.shar"
+Optware was originally developed as a distribution mechanism for software for the Open Source Linux project for the Linksys NSLU2 (a small low cost network storage device). That consumer storage device ran on Linux, and the community opened it up, but they needed a lightweight distribution mechanism for their lightweight devices. 
 
-Example:
+Since 2004 Optware has been adopted by a variety of Linux communities and device developers including the webOS community working on the Palm Pre and Pixi, and developers for devices as diverse as  Asus WL-500g,WL-HDD, WL-500gx, WL-500gP routers, the Synology DS-101 and DS-101g+ NAS devices. 
 
-adb push optware-bootstrap.shar /data
-adb shell
+At its core, Optware is a package manager to allow you to easly install and uninstall cross-compiled linux applications on your device over the internet. At this time, optware supports the automatic download and installation of over 1500 programs. (See the list at the end of this article.) 
 
-# sh /data/optware-bootstrap.shar
+==Why should I use Optware?==
 
-When done, reboot and verify you can run /opt/bin/bash for instance.
+Like the original slug, android devices lack a distribution mechanism to install Linux/command line tools programs and utilities. Many in the Android community who want or need to do command line processing on their device use a [http://en.wikipedia.org/wiki/Chroot chroot] of some sort (Debian seems popular) to get their distribution and package management tools. With Optware, it becomes possible to simply run whatever utility or program you want on the native Linux. 
 
+Additionally, Optware For Android installs openSSH making it possible to access your Nook from any PC with SSH capability, and sets up a normal username/password login system for the device at the command line.  All in all then, since it can be installed with a single script, since it's lightweight, and since it's designed for small and embedded devices, Optware is a perfect fit for the Android community. 
 
-NOTE:  
+Optware for Nook is the first Optware for Android release by the Novaports team and is their gift to the Android community members who have helped them so much with information on Android devices.
 
-The default adb shell is not great for running optware.  You
-could manually run  /opt/bin/bash  and source /etc/profile but
-an easier way is just to ssh in with your newly created user.
+==Requirements==
 
-Since dropbear does not yet autostart on boot, start it with:
+* Rooted NookColor
+* Wifi connection
+* Working adb on your desktop. 
 
-/opt/sbin/dropbear
+==Installation==
 
-Then ssh to your device's IP address. You may want to prevent
-your device from sleeping or keep a running ping to google.com or 
-similar to keep the connection alive for your ssh session.
+To install, ensure that your NookColor is attached to wifi, and plug in the usb.  
 
-Easier local options are forthcoming.
+Issue the following commands from a terminal / command window. 
 
+ adb push optware-bootstrap.shar /data
+ adb shell
+ sh /data/optware-bootstrap.shar
 
-IF UPGRADING
+When the script has finished, type:
 
-For now if you have an earlier version of optware already installed
-it is recommended to start clean.  Currently the installer will skip
-creating /data/opt if it exists.  This is a good idea, but unfortunately
-important files introduced in this version will also not get copied.
+ adb reboot
 
-This bug will be corrected but for now, please rename /data/opt 
-to /data/opt.old or similar before starting and reboot to clear links
-or mounts in the root filesystem
+Although you can find the Nook's ip address with command line tools, we strongly suggest that you install  Kenneth Cheng's Copy IP utility which simply displays your ip address in a window on the screen.
+
+It is available through the android market. 
+
+==Connect to the device via SSH==
+
+Now ssh to your device's IP address. You may want to prevent your device from sleeping or keep a running ping to google.com or similar to keep the connection alive for your ssh session.
+
+On Linux or on a Mac, at a console, type 
+
+ ssh UserName@aaa.bbb.ccc.ddd 
+
+replacing a,b,c and d with the ip address from above.  If you have set a root password, you can also log in as root by typing 
+
+ ssh root@aaa.bbb.ccc.ddd
+
+On Windows you will need to use putty.exe.  If you don't already have a copy of Putty, it can be downloaded at the link below. Save it in the same folder as your adb.exe.  Now, navigate to that folder and open putty.exe.  It does not need to be installed, it just runs.  
+
+http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe 
+
+How to connect in Putty: 
+
+* In putty, in the host name field, type the NC's IP address from above   
+* In the menu on the left, under connection choose Data, and in the auto-login username type the username you set up in the optware install. 
+* Press the open button. 
+
+You will now be in an ssh session connected to the nook running a bash shell.
+
+==Connecting via adb==
+
+You can connect to the nook's optware shell via adb for a usb connection.  
+
+ adb shell login -f YourUserName 
+
+or, if you have assigned a root password, 
+
+ adb shell login -f root
+
+after logging in, you will need to 
+
+  export TERM=linux   
+
+to get normal terminal information sent to the command window, but it's almost as good as an ssh connection on linux.  On windows, the command window ignores esc commands, so putty is your only decent option.
+
+==How to use Optware== 
+
+* You can update your ipkg database on the Nook with ipkg update.
+* You can ensure you have the latest (and greatest?) versions with ipkg upgrade. 
+* To check out a list of available packages, use ipkg list.
+* To see the packages you already have installed, use ipkg status.
+* To install a new package, use ipkg install <package name>.
+* To uninstall a package, use ipkg uninstall <package name>.
+
+==A small list of packages installable with Optware==
+
+Note that many many more (over 1500) native packages are available.  This is just a quick list of some of the more popular. A complete list is available at the NookColor's optware packages feed.
+
+http://ipkg.nslu2-linux.org/feeds/optware/cs08q1armel/cross/stable/Packages 
+
+* Apache - Popular heavyweight web server
+* Bash - Bourne Again SHell
+* BitTorrent - mainline python BT client packaged as py-bittorrent (launch by btdownloadcurses.py)
+* BusyBox
+* calculators - bc, calc, nickle
+* castget - a command-line podcast downloader
+* cpio - CoPy In/Out file archiver
+* CUPS - CUPS printer system.
+* diffutils - GNU Diffutils
+* emacs22 - OS^h^hEditor, see also jed, joe, jove, mg, qemacs, uemacs, zile
+* erlang - concurrency oriented language and runtime
+* git - distributed version control tool
+* irssi - console IRC client
+* less - Less is more file pager, see also most
+* make - GNU make tool
+* MediaWiki - The Wiki software used to run Wikipedia
+* Mt-daapd - iTunes Server
+* MySQL - The most popular Open Source SQL Database
+* Nano - Pico like Editor
+* ncFTP - A user friendly FTP client with background spooling.
+* Nethack - Greatest RPG of all time
+* ntfsprogs - NTFS filesystem libraries and utilities
+* OpenSSH - the recommended SSH server
+* python - An interpreted, interactive, object-oriented programming language
+* samba - Samba 3.0.14a-4 on Unslung 4.2x beta
+* samba2 - Samba 2.2.12
+* SWAT - the Samba Web Administration Tool
+* svn - Subversion version control system
+* tar - Heavyweight version of the tape archiver
+* vim - Vi iMproved, see also nvi
+* X11 - X Windows for your Nook. --warning: it's remote access only.
+* zip - a compression and file packaging utility
